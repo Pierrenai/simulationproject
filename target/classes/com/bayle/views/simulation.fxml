@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="500.0" style="-fx-background-color: GREY;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bayle.controller.SimulationController">
+   <children>
+      <Button fx:id="startButton" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#start" text="Start" />
+      <Pane fx:id="myScene" layoutY="100.0" prefHeight="500.0" prefWidth="500.0" style="-fx-background-color: WHITE;" />
+      <Label fx:id="timerLabel" layoutX="364.0" layoutY="9.0" text="00:00:00" textFill="WHITE">
+         <font>
+            <Font size="35.0" />
+         </font>
+      </Label>
+      <Label fx:id="counterLabel" layoutX="14.0" layoutY="48.0" text="Potato collected : 0" textFill="WHITE">
+         <font>
+            <Font size="35.0" />
+         </font>
+      </Label>
+      <Button fx:id="resetButton" layoutX="74.0" layoutY="14.0" mnemonicParsing="false" onAction="#reset" text="Reset" />
+   </children>
+</AnchorPane>

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javafx.scene.layout.Pane;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
 
@@ -17,6 +18,19 @@ public class Utils {
     static public double distanceBetweenTwoShapes(Shape shape1, Shape shape2) {
         return Math
                 .sqrt(Math.pow(shape1.getLayoutX() - shape2.getLayoutX(), 2) + Math.pow(shape1.getLayoutY() - shape2.getLayoutY(), 2));
+    }
+
+    static public double distanceBetweenTwoPane(Pane pane1, Pane pane2) {
+        System.out.println("pane1 x:" + pane1.getTranslateX() + " y:" + pane1.getTranslateY());
+        System.out.println("pane2 x:" + pane2.getTranslateX() + " y:" + pane2.getTranslateY());
+        return Math
+                .sqrt(Math.pow(pane1.getTranslateX() - pane2.getTranslateX(), 2) + Math.pow(pane1.getTranslateY() - pane2.getTranslateY(), 2));
+    }
+
+    static public Vecteur calculateDirectionBetweenTwoPane(Pane pane1, Pane pane2) {
+        double dx = pane2.getTranslateX() - pane1.getTranslateX();
+        double dy = pane2.getTranslateY() - pane1.getTranslateY();
+        return new Vecteur(dx, dy);
     }
 
 

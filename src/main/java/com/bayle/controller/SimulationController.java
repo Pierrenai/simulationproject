@@ -40,9 +40,8 @@ public class SimulationController {
         timer.start();
     }
 
-    private void update() {
+    public void update() {
         updateTimer();
-        updatePotatoCounter();
 
         if (simulation.isRunning()) {
             startButton.setText("Stop");
@@ -56,11 +55,12 @@ public class SimulationController {
 
     public void start() {
         if (simulation == null) {
-            simulation = new Simulation(myScene, 1, new ArrayList<>(), 1000, 0);
+            //simulation = new Simulation(myScene, 1, new ArrayList<>(), 1000, 0);
+            simulation = new Simulation(myScene, 60);
         }
 
         if (!simulation.isRunning()) {
-            simulation.start();
+            simulation.start(this);
         } else {
             simulation.stop();
         }
@@ -86,13 +86,6 @@ public class SimulationController {
         int seconds = time % 60;
 
         timerLabel.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds));
-    }
-
-    @FXML
-    Label counterLabel;
-
-    private void updatePotatoCounter() {
-        counterLabel.setText("Potato collected : " + simulation.getPotatoesCount());
     }
 
 }

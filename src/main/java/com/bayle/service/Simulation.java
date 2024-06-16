@@ -4,57 +4,61 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 
-import com.bayle.model.CircleCharacter;
+import com.bayle.model.Carotte;
+import com.bayle.model.Character;
+import com.bayle.affichage.ObjectRender;
+import com.bayle.controller.SimulationController;
 import com.bayle.util.Utils;
+import com.bayle.util.Vecteur;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Shape;
 
 public class Simulation {
+
+    private final int simulationPadding = 100;
+
     private double simulationSpeedMultiplier;
     private int potatoPerSecond;
     private int potatoAtStart;
 
+    private int nbFrameParSecond;
+
     private Pane myScene;
 
-
-    private List<CircleCharacter> characters;
-    private List<Circle> potatoes;
+    private List<Character> characters;
+    private List<Carotte> carottes;
 
     private boolean isRunning;
 
-    public boolean isRunning(){
+    public boolean isRunning() {
         return isRunning;
     }
-    
+
     private Timer timer;
     private long lastUpdate = 0;
 
-
     private int secondsElapsed;
+    private double timeElapsed = 0;
     private int simulationTime = 60; // in seconds
 
-
-    public int getRemainingTime(){
+    public int getRemainingTime() {
         return simulationTime - secondsElapsed;
     }
 
     private int potatoCount;
 
-    public int getPotatoesCount(){
+    public int getPotatoesCount() {
         return potatoCount;
     }
 
-
-
-    public Simulation(Pane scene){
-        this.potatoes = new ArrayList<>();
-        this.characters = new ArrayList<>();;
+    public Simulation(Pane scene) {
+        this.carottes = new ArrayList<>();
+        this.characters = new ArrayList<>();
 
         myScene = scene;
 
@@ -63,13 +67,30 @@ public class Simulation {
         isRunning = false;
         secondsElapsed = 0;
 
-        this.potatoAtStart = 1000;
+        this.potatoAtStart = 10;
         this.potatoPerSecond = 0;
     }
 
+    public Simulation(Pane scene, int nbFrameParSecond) {
+        this.carottes = new ArrayList<>();
+        this.characters = new ArrayList<>();
 
-    public Simulation(Pane scene, int simulationSpeedMultiplier, List<CircleCharacter> characters, int potatoAtStart, int potatoPerSecond){
-        this.potatoes = new ArrayList<>();
+        myScene = scene;
+
+        this.nbFrameParSecond = nbFrameParSecond;
+
+        this.simulationSpeedMultiplier = 1;
+
+        isRunning = false;
+        secondsElapsed = 0;
+
+        this.potatoAtStart = 10;
+        this.potatoPerSecond = 0;
+    }
+
+    public Simulation(Pane scene, int simulationSpeedMultiplier, List<Character> characters, int potatoAtStart,
+            int potatoPerSecond) {
+        this.carottes = new ArrayList<>();
         this.characters = characters;
 
         myScene = scene;
@@ -83,71 +104,93 @@ public class Simulation {
         this.potatoPerSecond = potatoPerSecond;
     }
 
+    public void start(SimulationController simctrl) {
+        if (characters.isEmpty()) {
+            addCarotte(potatoAtStart);
+            addCharacter();
 
-    public void start() {
-        if (!isRunning) {
-            if (characters.isEmpty()) {
-                addPotato(potatoAtStart);
-                addCharacter((int) (100 * simulationSpeedMultiplier));
-
-                potatoCount = 0;
-                secondsElapsed = 0;
+            Vecteur direction = new Vecteur(50, 150); // Déplacement vers la droite
+            for (Character character : characters) {
+                character.move(direction);
             }
-            isRunning = true;
 
-            timer = new Timer();
-            timer.scheduleAtFixedRate(new TimerTask() {
-                @Override
-                public void run() {
-                    long now = System.nanoTime();
-                    if (lastUpdate == 0 || now - lastUpdate >= (1_000_000_000 / simulationSpeedMultiplier)) {
-                        Platform.runLater(() -> addPotato(potatoPerSecond));
-                        secondsElapsed++;
-                        lastUpdate = now;
-                    }
-                    Platform.runLater(() -> updateSimulation(now));
-                }
-            }, 0, 1); // Démarre immédiatement et se répète toutes les 1 ms
-        } else {
-            stop();
+            potatoCount = 0;
+            secondsElapsed = 0;
         }
-    }
+        timer = new Timer();
 
+        isRunning = true;
+
+        new AnimationTimer() {
+            private long lastUpdate = 0;
+
+            @Override
+            public void handle(long now) {
+                if (lastUpdate == 0) {
+                    lastUpdate = now;
+                    return;
+                }
+
+                if (((now - lastUpdate) / 1_000_000_000.0) >= 1) { // update toutes les 1 secondes
+                    lastUpdate = now;
+                    secondsElapsed++;
+                }
+
+                // Update simulation
+                updateSimulation(now);
+            }
+        }.start();
+
+        // Rendu de la scene
+        // ObjectRender.Render(myScene);
+
+
+        
+    }
 
     public void reset() {
         stop();
 
         secondsElapsed = 0;
-        //updateTimer();
+        // updateTimer();
         potatoCount = 0;
-        //updatePotatoCounter();
+        // updatePotatoCounter();
 
-        for (Circle character : characters) {
+        for (Pane character : characters) {
             myScene.getChildren().remove(character);
         }
-        for (Circle potato : potatoes) {
-            myScene.getChildren().remove(potato);
+        for (Carotte carotte : carottes) {
+            myScene.getChildren().remove(carotte);
         }
 
         characters.clear();
-        potatoes.clear();
+        carottes.clear();
     }
 
     public void stop() {
         timer.cancel();
-        for (CircleCharacter character : characters) {
-            System.out.println("Character collected " + character.getPotatoCollected() + " potatoes. He have "
-                    + character.getSpeed() + " speed");
-        }
+        // for (Character character : characters) {
+        // System.out.println("Character collected " + character.getPotatoCollected() +
+        // " potatoes. He have "
+        // + character.getSpeed() + " speed");
+        // }
         isRunning = false;
     }
 
-
-    public void updateSimulation(long now) {
+    public void updateSimulation(double now) {
         checkEndCondition();
 
-        moveCharacters(now);
+        // moveCharacters(now);
+        for (Character character : characters) {
+            character.update();;
+        }
+
+
+        
+
         checkPotatoCollisions();
+
+        // ObjectRender.Render(myScene);
     }
 
     private void checkEndCondition() {
@@ -156,70 +199,88 @@ public class Simulation {
         }
     }
 
-    public void moveCharacters(long now) {
-        for (CircleCharacter character : characters) {
-            Shape nearestPotato = Utils.getNearestShapeFromList((Shape) character, new ArrayList<>(potatoes));
-            character.move(nearestPotato, now);
+    public void moveCharacters(double now) {
+        if ((now - timeElapsed) >= 1_000_000) {
+            for (Character character : characters) {
+                // Shape nearestPotato = Utils.getNearestShapeFromList((Shape) character, new
+                // ArrayList<>(potatoes));
+                // character.move(nearestPotato, now, false);
+                // Déplacer le personnage
+                // Vecteur direction = new Vecteur(50, 150); // Déplacement vers la droite
+                // character.move(direction);
+                character.update();
+
+            }
+            timeElapsed = now;
         }
+
     }
 
-    public void addPotato() {
+    public void addCarotte() {
         double width = myScene.getWidth();
         double height = myScene.getHeight();
 
-        Circle potato = new Circle();
-        potato.setRadius(7);
-        potato.setLayoutX(Utils.getRandom(10, (int) width - 10));
-        potato.setLayoutY(Utils.getRandom(10, (int) height - 10));
+        Carotte carotte = new Carotte();
+        carotte.setTranslateX(Utils.getRandom(simulationPadding, (int) width - simulationPadding));
+        carotte.setTranslateY(Utils.getRandom(simulationPadding, (int) height - simulationPadding));
 
-        potato.setFill(Paint.valueOf("YELLOW"));
-
-        myScene.getChildren().add(potato);
-        potatoes.add(potato);
+        myScene.getChildren().add(carotte);
+        carottes.add(carotte);
     }
 
-    public void addPotato(int count) {
+    public void addCarotte(int count) {
         for (int i = 0; i < count; i++) {
-            addPotato();
+            addCarotte();
+        }
+
+        for (Carotte carotte : carottes) {
+            System.out.println("carotte x:" + carotte.getTranslateX() + " y:" + carotte.getTranslateY());
         }
     }
 
-    public void addCharacter(int speed) {
-        double width = myScene.getWidth();
-        double height = myScene.getHeight();
+    public void removeCarotte(Carotte carotte){
+        myScene.getChildren().remove(carotte);
+        carottes.remove(carotte);
+    }
 
-        double posX = Utils.getRandom(10, (int) width - 10);
-        double posY = Utils.getRandom(10, (int) height - 10);
-
-        CircleCharacter character = new CircleCharacter(posX, posY, 14, speed);
-
-        myScene.getChildren().add(character);
+    public void addCharacter() {
+        Character character = new Character(this, "/com/bayle/images/character.png", 1000);
         characters.add(character);
+        myScene.getChildren().add(character);
     }
 
-    public void addCharacter(int speed, int count) {
+    public void addCharacter(int count) {
         for (int i = 0; i < count; i++) {
-            addCharacter(speed);
+            addCharacter();
         }
     }
 
     // trouver une autre fonction parce que le character qui est en haut de la pile
     // est toujours favorisé pour la récupération des patatess
     public void checkPotatoCollisions() {
-        Iterator<Circle> potatoIterator = potatoes.iterator();
+        Iterator<Carotte> potatoIterator = carottes.iterator();
         while (potatoIterator.hasNext()) {
-            Circle potato = potatoIterator.next();
-            for (CircleCharacter character : characters) {
-                if (Utils.distanceBetweenTwoShapes(potato, character) <= 20) {
-                    myScene.getChildren().remove(potato);
-                    potatoIterator.remove();
-                    potatoCount++;
-                    //updatePotatoCounter();
-                    character.collectPotato();
-                    break;
-                }
-            }
+            Carotte potato = potatoIterator.next();
+            // for (Character character : characters) {
+            // if (Utils.distanceBetweenTwoShapes(potato, character) <= 20) {
+            // myScene.getChildren().remove(potato);
+            // potatoIterator.remove();
+            // potatoCount++;
+            // //updatePotatoCounter();
+            // character.collectPotato();
+            // break;
+            // }
+            // }
         }
+    }
+
+
+    public List<Carotte> getCarottes() {
+        return this.carottes;
+    }
+
+    public Pane getmyScene() {
+        return myScene;
     }
 
 }

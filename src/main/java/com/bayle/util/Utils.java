@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javafx.scene.layout.Pane;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
 
 public class Utils {

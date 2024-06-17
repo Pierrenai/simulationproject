@@ -3,7 +3,6 @@ package com.bayle.service;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Timer;
 
 import com.bayle.model.Carotte;
 import com.bayle.model.Character;
@@ -13,20 +12,12 @@ import com.bayle.util.Utils;
 import com.bayle.util.Vecteur;
 
 import javafx.animation.AnimationTimer;
-import javafx.application.Platform;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Paint;
-import javafx.scene.shape.Circle;
 
 public class Simulation {
 
     private final int simulationPadding = 100;
-
-    private double simulationSpeedMultiplier;
-    private int potatoPerSecond;
-    private int potatoAtStart;
-
-    private int nbFrameParSecond;
+    private final int amountOfCarotte = 30;
 
     private Pane myScene;
 
@@ -39,21 +30,11 @@ public class Simulation {
         return isRunning;
     }
 
-    private Timer timer;
-    private long lastUpdate = 0;
-
     private int secondsElapsed;
-    private double timeElapsed = 0;
     private int simulationTime = 60; // in seconds
 
     public int getRemainingTime() {
         return simulationTime - secondsElapsed;
-    }
-
-    private int potatoCount;
-
-    public int getPotatoesCount() {
-        return potatoCount;
     }
 
     public Simulation(Pane scene) {
@@ -62,62 +43,22 @@ public class Simulation {
 
         myScene = scene;
 
-        this.simulationSpeedMultiplier = 1;
-
         isRunning = false;
         secondsElapsed = 0;
-
-        this.potatoAtStart = 10;
-        this.potatoPerSecond = 0;
-    }
-
-    public Simulation(Pane scene, int nbFrameParSecond) {
-        this.carottes = new ArrayList<>();
-        this.characters = new ArrayList<>();
-
-        myScene = scene;
-
-        this.nbFrameParSecond = nbFrameParSecond;
-
-        this.simulationSpeedMultiplier = 1;
-
-        isRunning = false;
-        secondsElapsed = 0;
-
-        this.potatoAtStart = 10;
-        this.potatoPerSecond = 0;
-    }
-
-    public Simulation(Pane scene, int simulationSpeedMultiplier, List<Character> characters, int potatoAtStart,
-            int potatoPerSecond) {
-        this.carottes = new ArrayList<>();
-        this.characters = characters;
-
-        myScene = scene;
-
-        this.simulationSpeedMultiplier = simulationSpeedMultiplier;
-
-        isRunning = false;
-        secondsElapsed = 0;
-
-        this.potatoAtStart = potatoAtStart;
-        this.potatoPerSecond = potatoPerSecond;
     }
 
     public void start(SimulationController simctrl) {
         if (characters.isEmpty()) {
-            addCarotte(potatoAtStart);
+            addCarotte(amountOfCarotte);
             addCharacter();
 
             Vecteur direction = new Vecteur(50, 150); // Déplacement vers la droite
             for (Character character : characters) {
                 character.move(direction);
             }
-
-            potatoCount = 0;
+            
             secondsElapsed = 0;
         }
-        timer = new Timer();
 
         isRunning = true;
 
@@ -143,18 +84,14 @@ public class Simulation {
 
         // Rendu de la scene
         // ObjectRender.Render(myScene);
-
-
         
     }
 
+    // Reset the simulation
     public void reset() {
         stop();
 
         secondsElapsed = 0;
-        // updateTimer();
-        potatoCount = 0;
-        // updatePotatoCounter();
 
         for (Pane character : characters) {
             myScene.getChildren().remove(character);
@@ -167,13 +104,9 @@ public class Simulation {
         carottes.clear();
     }
 
+    // Stop the simulation
     public void stop() {
-        timer.cancel();
-        // for (Character character : characters) {
-        // System.out.println("Character collected " + character.getPotatoCollected() +
-        // " potatoes. He have "
-        // + character.getSpeed() + " speed");
-        // }
+
         isRunning = false;
     }
 
@@ -185,9 +118,6 @@ public class Simulation {
             character.update();;
         }
 
-
-        
-
         checkPotatoCollisions();
 
         // ObjectRender.Render(myScene);
@@ -197,23 +127,6 @@ public class Simulation {
         if (secondsElapsed >= simulationTime) {
             stop();
         }
-    }
-
-    public void moveCharacters(double now) {
-        if ((now - timeElapsed) >= 1_000_000) {
-            for (Character character : characters) {
-                // Shape nearestPotato = Utils.getNearestShapeFromList((Shape) character, new
-                // ArrayList<>(potatoes));
-                // character.move(nearestPotato, now, false);
-                // Déplacer le personnage
-                // Vecteur direction = new Vecteur(50, 150); // Déplacement vers la droite
-                // character.move(direction);
-                character.update();
-
-            }
-            timeElapsed = now;
-        }
-
     }
 
     public void addCarotte() {

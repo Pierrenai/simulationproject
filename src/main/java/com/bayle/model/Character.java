@@ -101,12 +101,6 @@ public class Character extends Pane {
         }
     }
 
-    private double calculateDistance(double targetX, double targetY) {
-        double dx = targetX - this.getTranslateX();
-        double dy = targetY - this.getTranslateY();
-        return Math.sqrt(dx * dx + dy * dy);
-    }
-
     private Vecteur calculateDirectionTo(Pane pane2) {
         double dx = pane2.getTranslateX() - this.getTranslateX();
         double dy = pane2.getTranslateY() - this.getTranslateY();
@@ -143,6 +137,7 @@ public class Character extends Pane {
 
     public void move(Carotte carotte) {
         Vecteur direction = calculateDirectionTo(carotte);
+
         this.isMoving = true;
         // Calcul de la durée de la translation en fonction de la distance et de la
         // vitesse
@@ -186,28 +181,7 @@ public class Character extends Pane {
             if (destinationY > scene.getHeight() - padding)
                 direction.directionY = scene.getHeight() - this.getTranslateY() - padding;
 
-            System.out.println("directionX:" + direction.directionX);
-            System.out.println("directionY:" + direction.directionY);
-
-            this.isMoving = true;
-            // Calcul de la durée de la translation en fonction de la distance et de la
-            // vitesse
-            double distance = Math.sqrt(Math.pow(direction.directionX, 2) + Math.pow(direction.directionY, 2));
-            double durationInSeconds = distance / speedPerSecond;
-
-            // Animation de translation
-            translateTransition = new TranslateTransition(Duration.seconds(durationInSeconds), this);
-            translateTransition.setByX(direction.directionX);
-            translateTransition.setByY(direction.directionY);
-
-            // Ajouter un listener pour détecter la fin de l'animation
-            translateTransition.setOnFinished(event -> {
-                this.isMoving = false;
-                update(); // Arrêter la rotation après la fin du déplacement
-            });
-
-            translateTransition.play();
-            update(); // Démarrer la rotation lorsque le déplacement commence
+            move(direction);
         }
     }
 

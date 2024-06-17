@@ -56,7 +56,7 @@ public class SimulationController {
     public void start() {
         if (simulation == null) {
             //simulation = new Simulation(myScene, 1, new ArrayList<>(), 1000, 0);
-            simulation = new Simulation(myScene, 60);
+            simulation = new Simulation(myScene);
         }
 
         if (!simulation.isRunning()) {

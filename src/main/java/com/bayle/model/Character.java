@@ -16,13 +16,23 @@ import javafx.util.Duration;
 
 public class Character extends Pane {
 
-    private final int padding = 100;
-    private final int step = 1000;
+    private final int step = 10000;
     private final int proximityThreshold = 100;
 
     private Simulation simulation;
+
+    // Variable graphique
     private ImageView imageView;
     private Text scoreText;
+
+
+    // Variable
+    private House house;
+    public void setHouse(House house){
+        this.house = house;
+    }
+
+    private int padding;
     private int score;
     private double speedPerSecond;
 
@@ -33,6 +43,7 @@ public class Character extends Pane {
 
     public Character(Simulation simulation, String imagePath, double speedPerSecond) {
         this.simulation = simulation;
+        padding = simulation.getTerrain().getSimPadding();
 
         // Initialiser l'image
         Image image = new Image(getClass().getResourceAsStream(imagePath));

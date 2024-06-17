@@ -1,6 +1,6 @@
 package com.bayle.affichage;
 
-import com.bayle.controller.SimulationController;
+import com.bayle.archives.SimulationController;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

@@ -3,15 +3,19 @@ package com.bayle.service;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.bayle.model.Carotte;
 import com.bayle.model.Character;
+import com.bayle.model.Terrain;
 import com.bayle.affichage.ObjectRender;
-import com.bayle.controller.SimulationController;
+import com.bayle.affichage.SimulationScene;
+import com.bayle.archives.SimulationController;
 import com.bayle.util.Utils;
 import com.bayle.util.Vecteur;
 
 import javafx.animation.AnimationTimer;
+import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 
 public class Simulation {
@@ -19,12 +23,14 @@ public class Simulation {
     private final int simulationPadding = 100;
     private final int amountOfCarotte = 30;
 
-    private Pane myScene;
+    private Terrain terrain;
+    public Terrain getTerrain(){
+        return terrain;
+    }
 
-    private List<Character> characters;
-    private List<Carotte> carottes;
+    private List<Pane> sceneObjects;
 
-    private boolean isRunning;
+    private boolean isRunning = false;
 
     public boolean isRunning() {
         return isRunning;
@@ -37,26 +43,19 @@ public class Simulation {
         return simulationTime - secondsElapsed;
     }
 
-    public Simulation(Pane scene) {
-        this.carottes = new ArrayList<>();
-        this.characters = new ArrayList<>();
-
-        myScene = scene;
+    public Simulation(SimulationScene scene) {
+        this.sceneObjects = new ArrayList<>();
+        terrain = scene.getTerrain();
 
         isRunning = false;
         secondsElapsed = 0;
     }
 
-    public void start(SimulationController simctrl) {
-        if (characters.isEmpty()) {
+    public void start() {
+        if (sceneObjects.isEmpty()) {
             addCarotte(amountOfCarotte);
-            addCharacter();
+            addCharacter(2);
 
-            Vecteur direction = new Vecteur(50, 150); // Déplacement vers la droite
-            for (Character character : characters) {
-                character.move(direction);
-            }
-            
             secondsElapsed = 0;
         }
 
@@ -78,88 +77,65 @@ public class Simulation {
                 }
 
                 // Update simulation
-                updateSimulation(now);
+                update();
             }
         }.start();
 
         // Rendu de la scene
         // ObjectRender.Render(myScene);
-        
+
     }
 
-    // Reset the simulation
-    public void reset() {
-        stop();
+    public void update() {
+        if (isRunning) {
+            for (Character character : getCharacters()) {
+                character.update();
+            }
 
-        secondsElapsed = 0;
+            // Toujours avoir le nombre de carotte sur la carte
+            // ps: peut-être changer pour faire ce spawn de carotte toutes les x secondes
+            addCarotte(amountOfCarotte - getCarottes().size());
 
-        for (Pane character : characters) {
-            myScene.getChildren().remove(character);
-        }
-        for (Carotte carotte : carottes) {
-            myScene.getChildren().remove(carotte);
-        }
-
-        characters.clear();
-        carottes.clear();
-    }
-
-    // Stop the simulation
-    public void stop() {
-
-        isRunning = false;
-    }
-
-    public void updateSimulation(double now) {
-        checkEndCondition();
-
-        // moveCharacters(now);
-        for (Character character : characters) {
-            character.update();;
-        }
-
-        checkPotatoCollisions();
-
-        // ObjectRender.Render(myScene);
-    }
-
-    private void checkEndCondition() {
-        if (secondsElapsed >= simulationTime) {
-            stop();
+            // ObjectRender.Render(myScene);
         }
     }
 
     public void addCarotte() {
-        double width = myScene.getWidth();
-        double height = myScene.getHeight();
+        double width = terrain.getWidth();
+        double height = terrain.getHeight();
 
         Carotte carotte = new Carotte();
         carotte.setTranslateX(Utils.getRandom(simulationPadding, (int) width - simulationPadding));
         carotte.setTranslateY(Utils.getRandom(simulationPadding, (int) height - simulationPadding));
 
-        myScene.getChildren().add(carotte);
-        carottes.add(carotte);
+        terrain.getChildren().add(carotte);
+        sceneObjects.add(carotte);
     }
 
     public void addCarotte(int count) {
-        for (int i = 0; i < count; i++) {
-            addCarotte();
-        }
+        if (count > 0) {
 
-        for (Carotte carotte : carottes) {
-            System.out.println("carotte x:" + carotte.getTranslateX() + " y:" + carotte.getTranslateY());
+            for (int i = 0; i < count; i++) {
+                addCarotte();
+            }
+
+            for (Carotte carotte : getCarottes()) {
+                System.out.println("carotte x:" + carotte.getTranslateX() + " y:" + carotte.getTranslateY());
+            }
         }
     }
 
-    public void removeCarotte(Carotte carotte){
-        myScene.getChildren().remove(carotte);
-        carottes.remove(carotte);
+    public void removeCarotte(Carotte carotte) {
+        terrain.getChildren().remove(carotte);
+        sceneObjects.remove(carotte);
     }
 
     public void addCharacter() {
-        Character character = new Character(this, "/com/bayle/images/character.png", 1000);
-        characters.add(character);
-        myScene.getChildren().add(character);
+        Character character = new Character(this, "/com/bayle/images/character.png", 50);
+        character.setTranslateX(100);
+        character.setTranslateY(100);
+        sceneObjects.add(character);
+        terrain.getChildren().add(character);
     }
 
     public void addCharacter(int count) {
@@ -168,32 +144,22 @@ public class Simulation {
         }
     }
 
-    // trouver une autre fonction parce que le character qui est en haut de la pile
-    // est toujours favorisé pour la récupération des patatess
-    public void checkPotatoCollisions() {
-        Iterator<Carotte> potatoIterator = carottes.iterator();
-        while (potatoIterator.hasNext()) {
-            Carotte potato = potatoIterator.next();
-            // for (Character character : characters) {
-            // if (Utils.distanceBetweenTwoShapes(potato, character) <= 20) {
-            // myScene.getChildren().remove(potato);
-            // potatoIterator.remove();
-            // potatoCount++;
-            // //updatePotatoCounter();
-            // character.collectPotato();
-            // break;
-            // }
-            // }
-        }
+    public List<Character> getCharacters() {
+        return sceneObjects.stream()
+                .filter(obj -> obj instanceof Character)
+                .map(obj -> (Character) obj)
+                .collect(Collectors.toList());
     }
 
-
     public List<Carotte> getCarottes() {
-        return this.carottes;
+        return sceneObjects.stream()
+                .filter(obj -> obj instanceof Carotte)
+                .map(obj -> (Carotte) obj)
+                .collect(Collectors.toList());
     }
 
     public Pane getmyScene() {
-        return myScene;
+        return terrain;
     }
 
 }

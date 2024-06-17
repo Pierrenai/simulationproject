@@ -1,4 +1,4 @@
-package com.bayle.controller;
+package com.bayle.archives;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -43,10 +43,10 @@ public class SimulationController {
     public void update() {
         updateTimer();
 
-        if (simulation.isRunning()) {
-            startButton.setText("Stop");
-        } else {
+        if (simulation.isRunning() == false) {
             startButton.setText("Start");
+        } else {
+            startButton.setDisable(true);
         }
     }
 
@@ -55,22 +55,12 @@ public class SimulationController {
 
     public void start() {
         if (simulation == null) {
-            //simulation = new Simulation(myScene, 1, new ArrayList<>(), 1000, 0);
-            simulation = new Simulation(myScene);
+            // simulation = new Simulation(myScene);
         }
 
-        if (!simulation.isRunning()) {
-            simulation.start(this);
-        } else {
-            simulation.stop();
-        }
-    }
-
-    @FXML
-    Button resetButton;
-
-    public void reset() {
-        simulation.reset();
+        if (simulation.isRunning() == false) {
+            simulation.start();
+        } 
     }
 
     @FXML

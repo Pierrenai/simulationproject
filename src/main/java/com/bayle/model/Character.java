@@ -101,7 +101,7 @@ public class Character extends Pane {
 
     // Définition de la loop
     public void update() {
-        if (!isCollecting) {
+        if (isCollecting == false) {
             // Récupérer la carotte la plus proche
             Carotte carotteMin = null;
             double minDistance = Double.MAX_VALUE;
@@ -129,18 +129,22 @@ public class Character extends Pane {
             }
 
             // Essai de collecter une vache
-            if (cowMin != null) {
-                Character someone = nearestSomeoneToCollectCow(cowMin);
-                if (minCowDistance < proximityThreshold && someone != null) {
-                    this.stopMove();
-                    someone.stopMove();
 
-                    this.collectCow(cowMin, true);
-                    someone.collectCow(cowMin, false);
-                }
+            Character someone = null;
+            if (cowMin != null) {
+                someone = nearestSomeoneToCollectCow(cowMin);
+            }
+            if (minCowDistance < proximityThreshold && someone != null) {
+                this.stopMove();
+                someone.stopMove();
+
+                this.collectCow(cowMin, true);
+                someone.collectCow(cowMin, false);
             } else if (minDistance < proximityThreshold && carotteMin != null && carotteMin.collect()) {
+                this.stopMove();
+                System.out.println("Collecting carotte...");
                 collectCarotte(carotteMin);
-            } else if (!isMoving) {
+            } else if (isMoving == false) {
                 moveAround();
             }
         }
@@ -264,6 +268,7 @@ public class Character extends Pane {
         Vecteur direction = calculateDirectionTo(carotte);
 
         this.isMoving = true;
+        this.isCollecting = true;
         // Calcul de la durée de la translation en fonction de la distance et de la
         // vitesse
         double distance = Math.sqrt(Math.pow(direction.directionX, 2) + Math.pow(direction.directionY, 2));
@@ -280,6 +285,7 @@ public class Character extends Pane {
             simulation.getTerrain().removeObject(carotte);
             isCollecting = false;
             incrementScore(1);
+            System.out.println("Carotte collected!");
         });
 
         translateTransition.play();

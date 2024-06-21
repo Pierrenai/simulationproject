@@ -21,8 +21,8 @@ import javafx.scene.layout.Pane;
 public class Simulation {
 
     private final int simulationPadding = 100;
-    private final int amountOfCarotte = 30;
-    private final int amountOfCow = 1;
+    private final int amountOfCarotte = 15;
+    private final int amountOfCow = 7;
 
     private Terrain terrain;
 
@@ -101,7 +101,7 @@ public class Simulation {
             // Toujours avoir le nombre de carotte sur la carte
             // ps: peut-être changer pour faire ce spawn de carotte toutes les x secondes
             terrain.addCarotte(amountOfCarotte - terrain.getCarottes().size());
-           // terrain.addCow(amountOfCow - terrain.getCows().size());
+            terrain.addCow(amountOfCow - terrain.getCows().size());
 
             // ObjectRender.Render(myScene);
         }

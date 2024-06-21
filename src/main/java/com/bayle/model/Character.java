@@ -214,17 +214,17 @@ public class Character extends Pane {
 
     private Character nearestSomeoneToCollectCow(Cow cow) {
         Character nearestCharacter = null;
-        double distanceChara = Double.MAX_VALUE;
+        double minDistance = Double.MAX_VALUE;
         for (Character character : terrain.getCharacters()) {
-            if (character.isCollecting() == false) {
-                double new_dist = Utils.distanceBetweenTwoPane(this, character);
-                if (new_dist < distanceChara) {
-                    distanceChara = new_dist;
+            if (!character.isCollecting() && character != this) {
+                double distance = Utils.distanceBetweenTwoPane(this, character);
+                if (distance < minDistance) {
+                    minDistance = distance;
                     nearestCharacter = character;
                 }
             }
         }
-        return nearestCharacter; // Can be null
+        return nearestCharacter;
     }
 
     private Vecteur calculateDirectionTo(Pane pane2) {

@@ -1,7 +1,5 @@
 package com.bayle.model;
 
-import java.lang.classfile.Signature.TypeArg.WildcardIndicator;
-
 import com.bayle.util.Utils;
 
 import javafx.scene.image.Image;

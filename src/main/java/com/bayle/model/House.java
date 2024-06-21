@@ -26,6 +26,11 @@ public class House extends Pane {
         imageView.setFitWidth(WIDTH);
         imageView.setFitHeight(HEIGHT);
 
+        // Centrer l'image
+        imageView.setTranslateX(WIDTH / (-2));
+        imageView.setTranslateY(HEIGHT / (-2));
+
+
         // Ajouter l'image au Pane
         getChildren().add(imageView);
 

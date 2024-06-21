@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.bayle.model.Carotte;
 import com.bayle.model.Character;
+import com.bayle.model.Cow;
 import com.bayle.model.Terrain;
 import com.bayle.affichage.ObjectRender;
 import com.bayle.affichage.SimulationScene;
@@ -22,13 +23,13 @@ public class Simulation {
 
     private final int simulationPadding = 100;
     private final int amountOfCarotte = 30;
+    private final int amountOfCow = 1;
 
     private Terrain terrain;
-    public Terrain getTerrain(){
+
+    public Terrain getTerrain() {
         return terrain;
     }
-
-    private List<Pane> sceneObjects;
 
     private boolean isRunning = false;
 
@@ -44,17 +45,18 @@ public class Simulation {
     }
 
     public Simulation(SimulationScene scene) {
-        this.sceneObjects = new ArrayList<>();
         terrain = scene.getTerrain();
+        terrain.setSimulatiotn(this);
 
         isRunning = false;
         secondsElapsed = 0;
     }
 
     public void start() {
-        if (sceneObjects.isEmpty()) {
-            addCarotte(amountOfCarotte);
-            addCharacter(2);
+        if (terrain.getCharacters().isEmpty()) {
+            terrain.addCarotte(amountOfCarotte);
+            terrain.addCharacter(2);
+            terrain.addCow();
 
             secondsElapsed = 0;
         }
@@ -88,74 +90,22 @@ public class Simulation {
 
     public void update() {
         if (isRunning) {
-            for (Character character : getCharacters()) {
+            terrain.update();
+
+            for (Character character : terrain.getCharacters()) {
                 character.update();
+            }
+            for (Cow cow : terrain.getCows()) {
+                cow.update();
             }
 
             // Toujours avoir le nombre de carotte sur la carte
             // ps: peut-être changer pour faire ce spawn de carotte toutes les x secondes
-            addCarotte(amountOfCarotte - getCarottes().size());
+            terrain.addCarotte(amountOfCarotte - terrain.getCarottes().size());
+            terrain.addCow(amountOfCow - terrain.getCows().size());
 
             // ObjectRender.Render(myScene);
         }
-    }
-
-    public void addCarotte() {
-        double width = terrain.getWidth();
-        double height = terrain.getHeight();
-
-        Carotte carotte = new Carotte();
-        carotte.setTranslateX(Utils.getRandom(simulationPadding, (int) width - simulationPadding));
-        carotte.setTranslateY(Utils.getRandom(simulationPadding, (int) height - simulationPadding));
-
-        terrain.getChildren().add(carotte);
-        sceneObjects.add(carotte);
-    }
-
-    public void addCarotte(int count) {
-        if (count > 0) {
-
-            for (int i = 0; i < count; i++) {
-                addCarotte();
-            }
-
-            for (Carotte carotte : getCarottes()) {
-                System.out.println("carotte x:" + carotte.getTranslateX() + " y:" + carotte.getTranslateY());
-            }
-        }
-    }
-
-    public void removeCarotte(Carotte carotte) {
-        terrain.getChildren().remove(carotte);
-        sceneObjects.remove(carotte);
-    }
-
-    public void addCharacter() {
-        Character character = new Character(this, "/com/bayle/images/character.png", 50);
-        character.setTranslateX(100);
-        character.setTranslateY(100);
-        sceneObjects.add(character);
-        terrain.getChildren().add(character);
-    }
-
-    public void addCharacter(int count) {
-        for (int i = 0; i < count; i++) {
-            addCharacter();
-        }
-    }
-
-    public List<Character> getCharacters() {
-        return sceneObjects.stream()
-                .filter(obj -> obj instanceof Character)
-                .map(obj -> (Character) obj)
-                .collect(Collectors.toList());
-    }
-
-    public List<Carotte> getCarottes() {
-        return sceneObjects.stream()
-                .filter(obj -> obj instanceof Carotte)
-                .map(obj -> (Carotte) obj)
-                .collect(Collectors.toList());
     }
 
     public Pane getmyScene() {

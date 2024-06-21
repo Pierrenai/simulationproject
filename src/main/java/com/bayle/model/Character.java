@@ -4,6 +4,7 @@ import com.bayle.service.Simulation;
 import com.bayle.util.Utils;
 import com.bayle.util.Vecteur;
 
+import javafx.animation.Animation;
 import javafx.animation.RotateTransition;
 import javafx.animation.TranslateTransition;
 import javafx.scene.image.Image;
@@ -100,7 +101,7 @@ public class Character extends Pane {
 
     // Définition de la loop
     public void update() {
-        if (isCollecting == false) {
+        if (!isCollecting) {
             // Récupérer la carotte la plus proche
             Carotte carotteMin = null;
             double minDistance = Double.MAX_VALUE;
@@ -114,7 +115,7 @@ public class Character extends Pane {
                 }
             }
 
-            // Récupére la vache la plus
+            // Récupérer la vache la plus proche
             Cow cowMin = null;
             double minCowDistance = Double.MAX_VALUE;
             for (Cow cow : simulation.getTerrain().getCows()) {
@@ -128,27 +129,20 @@ public class Character extends Pane {
             }
 
             // Essai de collecter une vache
+            if (cowMin != null) {
+                Character someone = nearestSomeoneToCollectCow(cowMin);
+                if (minCowDistance < proximityThreshold && someone != null) {
+                    this.stopMove();
+                    someone.stopMove();
 
-            Character someone = nearestSomeoneToCollectCow(cowMin);
-            if (minCowDistance < proximityThreshold && cowMin != null && someone != null) {
-                this.stopMove();
-                someone.stopMove();
-
-                this.isCollecting = true;
-                someone.isCollecting = true;
-                someone.incrementScore(1000);
-
-                collectCow(cowMin, true);
-                someone.collectCow(cowMin, false);
-
+                    this.collectCow(cowMin, true);
+                    someone.collectCow(cowMin, false);
+                }
             } else if (minDistance < proximityThreshold && carotteMin != null && carotteMin.collect()) {
-
-            } else if (isMoving == false) {
+                collectCarotte(carotteMin);
+            } else if (!isMoving) {
                 moveAround();
             }
-        } else if (cowInCollecting != null && cowInCollecting.allIsReady()) {
-            cowInCollecting.getCollected();
-            System.out.println("Cow collected!");
         }
 
         if (isMoving) {
@@ -182,7 +176,15 @@ public class Character extends Pane {
         }
         moveTo(cow, padding, () -> {
             isReadyToCollectedCow = true;
+            if (cow.allIsReady()) {
+                cowInCollecting.getCollected();
+                System.out.println("Cow collected!");
+            }
         });
+    }
+
+    private boolean bothCharactersReady(Character otherCharacter) {
+        return this.isReadyToCollectedCow && otherCharacter.isReadyToCollectedCow;
     }
 
     private void moveTo(Pane destinationPane, Vecteur padding, MoveCompletionCallback moveCompletionCallback) {
@@ -239,24 +241,23 @@ public class Character extends Pane {
     }
 
     public void moveTo(Vecteur direction) {
+        if (translateTransition != null && translateTransition.getStatus() == Animation.Status.RUNNING) {
+            translateTransition.stop();
+        }
         this.isMoving = true;
-        // Calcul de la durée de la translation en fonction de la distance et de la
-        // vitesse
         double distance = Math.sqrt(Math.pow(direction.directionX, 2) + Math.pow(direction.directionY, 2));
         double durationInSeconds = distance / speedPerSecond;
 
-        // Animation de translation
         translateTransition = new TranslateTransition(Duration.seconds(durationInSeconds), this);
         translateTransition.setByX(direction.directionX);
         translateTransition.setByY(direction.directionY);
 
-        // Ajouter un listener pour détecter la fin de l'animation
         translateTransition.setOnFinished(event -> {
             this.isMoving = false;
         });
 
         translateTransition.play();
-        update(); // Démarrer la rotation lorsque le déplacement commence
+        update();
     }
 
     public void collectCarotte(Carotte carotte) {
@@ -316,6 +317,12 @@ public class Character extends Pane {
             translateTransition.stop(); // Arrêter l'animation de translation
             isMoving = false; // Mettre à jour l'état du personnage
         }
-        
+
+    }
+
+    public void resetCollecting() {
+        isCollecting = false;
+        cowInCollecting = null;
+        isReadyToCollectedCow = false;
     }
 }

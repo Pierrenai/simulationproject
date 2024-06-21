@@ -101,7 +101,7 @@ public class Simulation {
             // Toujours avoir le nombre de carotte sur la carte
             // ps: peut-être changer pour faire ce spawn de carotte toutes les x secondes
             terrain.addCarotte(amountOfCarotte - terrain.getCarottes().size());
-            terrain.addCow(amountOfCow - terrain.getCows().size());
+           // terrain.addCow(amountOfCow - terrain.getCows().size());
 
             // ObjectRender.Render(myScene);
         }

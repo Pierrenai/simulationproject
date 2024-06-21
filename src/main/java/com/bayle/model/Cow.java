@@ -51,6 +51,7 @@ public class Cow extends Pane {
 
     public void getCollected() {
         for (Character character : characterThanCollect) {
+            character.resetCollecting();
             character.incrementScore(5);
         }
         simulation.getTerrain().removeObject(this);

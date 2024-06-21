@@ -7,8 +7,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Text;
 
 public class Carotte extends Pane {
 
@@ -35,7 +33,7 @@ public class Carotte extends Pane {
         getChildren().add(imageView);
 
         if (Utils.debug) {
-            // Mettre un point au 0 de l'image
+            // Faire la hitbox
             Circle circle = new Circle();
             circle.setRadius(1);
 

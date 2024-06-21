@@ -191,8 +191,8 @@ public class Terrain extends Pane {
     public void addCow() {
         Cow cow = new Cow(simulation, 30);
 
-        cow.setTranslateX(200);
-        cow.setTranslateY(200);
+        cow.setTranslateX(130);
+        cow.setTranslateY(130);
 
         objects.add(cow);
         getChildren().add(cow);

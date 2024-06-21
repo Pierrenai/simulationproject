@@ -1,7 +1,5 @@
 package com.bayle.model;
 
-import java.util.HashMap;
-
 import com.bayle.service.Simulation;
 import com.bayle.util.Utils;
 import com.bayle.util.Vecteur;
@@ -16,13 +14,14 @@ import javafx.util.Duration;
 
 public class Character extends Pane {
 
-    private static final double WIDTH = 30; // Largeur de la carotte
-    private static final double HEIGHT = 50; // Hauteur de la carotte
+    private static final double WIDTH = 30; // Largeur du personnage
+    private static final double HEIGHT = 50; // Hauteur du personnage
 
     private final int step = 10000;
     private final int proximityThreshold = 100;
 
     private Simulation simulation;
+    private Terrain terrain;
 
     // Variable graphique
     private ImageView imageView;
@@ -40,6 +39,17 @@ public class Character extends Pane {
     private double speedPerSecond;
 
     private boolean isMoving = false;
+
+    public boolean isMoving() {
+        return this.isMoving;
+    }
+
+    private boolean isReadyToCollectedCow = false;
+
+    public boolean isReadyToCollectedCow() {
+        return this.isReadyToCollectedCow;
+    }
+
     private boolean isCollecting = false;
 
     public boolean isCollecting() {
@@ -51,8 +61,12 @@ public class Character extends Pane {
     private TranslateTransition translateTransition;
 
     public Character(Simulation simulation, String imagePath, double speedPerSecond) {
+        // Initialiser les variables
         this.simulation = simulation;
-        padding = simulation.getTerrain().getSimPadding();
+        this.terrain = simulation.getTerrain();
+        padding = terrain.getSimPadding();
+
+        this.speedPerSecond = speedPerSecond;
 
         // Initialiser l'image
         Image image = new Image(getClass().getResourceAsStream(imagePath));
@@ -76,8 +90,6 @@ public class Character extends Pane {
         scoreText.setTranslateX(0); // Positionner au milieu
         getChildren().add(scoreText);
 
-        this.speedPerSecond = speedPerSecond;
-
         // Initialiser l'animation de rotation
         rotateTransition = new RotateTransition(Duration.seconds(0.5), this);
         rotateTransition.setFromAngle(-10);
@@ -88,7 +100,7 @@ public class Character extends Pane {
 
     // Définition de la loop
     public void update() {
-        if (isCollecting == false && cowInCollecting != null) {
+        if (isCollecting == false) {
             // Récupérer la carotte la plus proche
             Carotte carotteMin = null;
             double minDistance = Double.MAX_VALUE;
@@ -102,6 +114,7 @@ public class Character extends Pane {
                 }
             }
 
+            // Récupére la vache la plus
             Cow cowMin = null;
             double minCowDistance = Double.MAX_VALUE;
             for (Cow cow : simulation.getTerrain().getCows()) {
@@ -114,39 +127,28 @@ public class Character extends Pane {
                 }
             }
 
-            Character nearestCharacter = tryCollectCow(cowMin);
+            // Essai de collecter une vache
 
-            if (minCowDistance < proximityThreshold && cowMin != null && nearestCharacter != null) {
-                final Cow cow = cowMin;
-                cowMin.collect();
-                isCollecting = true;
-                if (translateTransition != null)
-                    translateTransition.stop();
-                move(cowMin, true, () -> {
-                    // Callback triggered when nearestCharacter's move with cowMin completes
-                    // Now trigger the move for thisCharacter with cowMin
-                    nearestCharacter.stopMove();
-                    nearestCharacter.move(cow, false, () -> {
-                        simulation.getTerrain().removeObject(cow);
-                        
-                        incrementScore(5);
-                        this.isCollecting = false;
-                        this.cowInCollecting = null;
+            Character someone = nearestSomeoneToCollectCow(cowMin);
+            if (minCowDistance < proximityThreshold && cowMin != null && someone != null) {
+                this.stopMove();
+                someone.stopMove();
 
-                        nearestCharacter.incrementScore(5);
-                        nearestCharacter.isCollecting = false;
-                        nearestCharacter.cowInCollecting = null;
-                    }); // null or another callback if needed);
-                });
+                this.isCollecting = true;
+                someone.isCollecting = true;
+                someone.incrementScore(1000);
+
+                collectCow(cowMin, true);
+                someone.collectCow(cowMin, false);
 
             } else if (minDistance < proximityThreshold && carotteMin != null && carotteMin.collect()) {
-                isCollecting = true;
-                if (translateTransition != null)
-                    translateTransition.stop();
-                move(carotteMin);
-            } else {
-                move(simulation.getmyScene());
+
+            } else if (isMoving == false) {
+                moveAround();
             }
+        } else if (cowInCollecting != null && cowInCollecting.allIsReady()) {
+            cowInCollecting.getCollected();
+            System.out.println("Cow collected!");
         }
 
         if (isMoving) {
@@ -161,18 +163,32 @@ public class Character extends Pane {
         }
     }
 
-    private Vecteur calculateDirectionTo(Pane pane2) {
-        double dx = pane2.getTranslateX() - this.getTranslateX();
-        double dy = pane2.getTranslateY() - this.getTranslateY();
-        return new Vecteur(dx, dy);
+    // Callback interface for move completion
+    public interface MoveCompletionCallback {
+        void onMoveComplete();
     }
 
-    public void incrementScore(int points) {
-        score += points;
-        scoreText.setText("" + score);
+    private void collectCow(Cow cow, boolean first) {
+        isReadyToCollectedCow = false;
+        cow.collect(this);
+        isCollecting = true;
+        cowInCollecting = cow;
+
+        Vecteur padding = new Vecteur(0, 0);
+        if (first) {
+            padding = new Vecteur(-30, 0);
+        } else {
+            padding = new Vecteur(30, 0);
+        }
+        moveTo(cow, padding, () -> {
+            isReadyToCollectedCow = true;
+        });
     }
 
-    public void move(Vecteur direction) {
+    private void moveTo(Pane destinationPane, Vecteur padding, MoveCompletionCallback moveCompletionCallback) {
+        Vecteur direction = calculateDirectionTo(destinationPane);
+        direction = new Vecteur(direction.directionX + padding.directionX, direction.directionY + padding.directionY);
+
         this.isMoving = true;
         // Calcul de la durée de la translation en fonction de la distance et de la
         // vitesse
@@ -187,14 +203,63 @@ public class Character extends Pane {
         // Ajouter un listener pour détecter la fin de l'animation
         translateTransition.setOnFinished(event -> {
             this.isMoving = false;
-            update(); // Arrêter la rotation après la fin du déplacement
+            if (moveCompletionCallback != null) {
+                moveCompletionCallback.onMoveComplete();
+            }
         });
 
         translateTransition.play();
         update(); // Démarrer la rotation lorsque le déplacement commence
     }
 
-    public void move(Carotte carotte) {
+    private Character nearestSomeoneToCollectCow(Cow cow) {
+        Character nearestCharacter = null;
+        double distanceChara = Double.MAX_VALUE;
+        for (Character character : terrain.getCharacters()) {
+            if (character.isCollecting() == false) {
+                double new_dist = Utils.distanceBetweenTwoPane(this, character);
+                if (new_dist < distanceChara) {
+                    distanceChara = new_dist;
+                    nearestCharacter = character;
+                }
+            }
+        }
+        return nearestCharacter; // Can be null
+    }
+
+    private Vecteur calculateDirectionTo(Pane pane2) {
+        double dx = pane2.getTranslateX() - this.getTranslateX();
+        double dy = pane2.getTranslateY() - this.getTranslateY();
+        return new Vecteur(dx, dy);
+    }
+
+    public void incrementScore(int points) {
+        score += points;
+        scoreText.setText("" + score);
+    }
+
+    public void moveTo(Vecteur direction) {
+        this.isMoving = true;
+        // Calcul de la durée de la translation en fonction de la distance et de la
+        // vitesse
+        double distance = Math.sqrt(Math.pow(direction.directionX, 2) + Math.pow(direction.directionY, 2));
+        double durationInSeconds = distance / speedPerSecond;
+
+        // Animation de translation
+        translateTransition = new TranslateTransition(Duration.seconds(durationInSeconds), this);
+        translateTransition.setByX(direction.directionX);
+        translateTransition.setByY(direction.directionY);
+
+        // Ajouter un listener pour détecter la fin de l'animation
+        translateTransition.setOnFinished(event -> {
+            this.isMoving = false;
+        });
+
+        translateTransition.play();
+        update(); // Démarrer la rotation lorsque le déplacement commence
+    }
+
+    public void collectCarotte(Carotte carotte) {
         Vecteur direction = calculateDirectionTo(carotte);
 
         this.isMoving = true;
@@ -214,92 +279,36 @@ public class Character extends Pane {
             simulation.getTerrain().removeObject(carotte);
             isCollecting = false;
             incrementScore(1);
-            update(); // Arrêter la rotation après la fin du déplacement
         });
 
         translateTransition.play();
         update(); // Démarrer la rotation lorsque le déplacement commence
     }
 
-    public Character tryCollectCow(Cow cow) {
-        Character nearestCharacter = null;
-        double distanceChara = Double.MAX_VALUE;
-        for (Character character : simulation.getTerrain().getCharacters()) {
-            if (character.isCollecting() == false) {
-                double new_dist = Utils.distanceBetweenTwoPane(this, character);
-                if (new_dist < distanceChara) {
-                    distanceChara = new_dist;
-                    nearestCharacter = character;
-                }
-            }
+    public void moveAround() {
+        Pane scene = simulation.getmyScene();
+        Vecteur direction = new Vecteur(Utils.getRandom(-step, step), Utils.getRandom(-step, step));
+        double destinationX = this.getTranslateX() + direction.directionX;
+        double destinationY = this.getTranslateY() + direction.directionY;
+
+        if (Utils.debug) {
+
+            System.out.println("destinationX:" + destinationX);
+            System.out.println("destinationY:" + destinationY);
         }
-        if (nearestCharacter != null) {
-            nearestCharacter.isCollecting = true;
-            return nearestCharacter;
-        } else {
-            return null;
-        }
-    }
 
-    // Callback interface for move completion
-    public interface MoveCompletionCallback {
-        void onMoveComplete();
-    }
+        if (destinationX < padding)
+            direction.directionX = direction.directionX - destinationX + padding;
+        if (destinationX > scene.getWidth() - padding)
+            direction.directionX = scene.getWidth() - this.getTranslateX() - padding;
 
-    public void move(Cow cow, boolean first, MoveCompletionCallback moveCompletionCallback) {
-        isCollecting = true;
-        cowInCollecting = cow;
-        Vecteur direction = calculateDirectionTo(cow);
+        if (destinationY < padding)
+            direction.directionY = direction.directionY - destinationY + padding;
+        if (destinationY > scene.getHeight() - padding)
+            direction.directionY = scene.getHeight() - this.getTranslateY() - padding;
 
-        this.isMoving = true;
-        // Calcul de la durée de la translation en fonction de la distance et de la
-        // vitesse
-        double distance = Math.sqrt(Math.pow(direction.directionX, 2) + Math.pow(direction.directionY, 2));
-        double durationInSeconds = distance / speedPerSecond;
+        moveTo(direction);
 
-        // Animation de translation
-        translateTransition = new TranslateTransition(Duration.seconds(durationInSeconds), this);
-        translateTransition.setByX(direction.directionX - 30);
-        translateTransition.setByY(direction.directionY);
-
-        // Ajouter un listener pour détecter la fin de l'animation
-        translateTransition.setOnFinished(event -> {
-            this.isMoving = false;
-            if (moveCompletionCallback != null) {
-                moveCompletionCallback.onMoveComplete();
-            }
-            update(); // Arrêter la rotation après la fin du déplacement
-
-        });
-
-        translateTransition.play();
-        update(); // Démarrer la rotation lorsque le déplacement commence
-    }
-
-    public void move(Pane scene) {
-        if (!isMoving) {
-            Vecteur direction = new Vecteur(Utils.getRandom(-step, step), Utils.getRandom(-step, step));
-            double destinationX = this.getTranslateX() + direction.directionX;
-            double destinationY = this.getTranslateY() + direction.directionY;
-
-            if (Utils.debug) {
-
-                System.out.println("destinationX:" + destinationX);
-                System.out.println("destinationY:" + destinationY);
-            }
-
-            if (destinationX < padding)
-                direction.directionX = direction.directionX - destinationX + padding;
-            if (destinationX > scene.getWidth() - padding)
-                direction.directionX = scene.getWidth() - this.getTranslateX() - padding;
-
-            if (destinationY < padding)
-                direction.directionY = direction.directionY - destinationY + padding;
-            if (destinationY > scene.getHeight() - padding)
-                direction.directionY = scene.getHeight() - this.getTranslateY() - padding;
-
-            move(direction);
-        }
     }
 
     public void stopMove() {
@@ -307,5 +316,6 @@ public class Character extends Pane {
             translateTransition.stop(); // Arrêter l'animation de translation
             isMoving = false; // Mettre à jour l'état du personnage
         }
+        
     }
 }

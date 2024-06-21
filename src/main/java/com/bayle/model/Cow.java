@@ -1,5 +1,8 @@
 package com.bayle.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.bayle.service.Simulation;
 import com.bayle.util.Utils;
 import com.bayle.util.Vecteur;
@@ -18,6 +21,8 @@ public class Cow extends Pane {
     private static final double WIDTH = 100; // Largeur de la carotte
     private static final double HEIGHT = 60; // Hauteur de la carotte
 
+    private List<Character> characterThanCollect;
+
     private final int step = 10000;
     private final int padding;
 
@@ -25,17 +30,32 @@ public class Cow extends Pane {
 
     private ImageView imageView;
     private boolean isCollectable = true;
+
     public boolean isCollectable() {
         return isCollectable;
     }
-    public boolean collect() {
-        if (isCollectable == true) {
-            isCollectable = false;
-            return true;
-        } else {
-            return false;
-        }
+
+    public void collect(Character character) {
+        isCollectable = false;
+        characterThanCollect.add(character);
     }
+
+    public boolean allIsReady() {
+        for (Character character : characterThanCollect) {
+            if (character.isReadyToCollectedCow() == false) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void getCollected() {
+        for (Character character : characterThanCollect) {
+            character.incrementScore(5);
+        }
+        simulation.getTerrain().removeObject(this);
+    }
+
     private boolean isMoving = false;
 
     private Simulation simulation;
@@ -47,8 +67,9 @@ public class Cow extends Pane {
         this.simulation = simulation;
         padding = simulation.getTerrain().getSimPadding();
 
-        this.speedPerSecond = speedPerSecond;
+        this.characterThanCollect = new ArrayList();
 
+        this.speedPerSecond = speedPerSecond;
 
         // Initialiser l'image
         Image image = new Image(getClass().getResourceAsStream("/com/bayle/images/cow.png"));
@@ -84,7 +105,6 @@ public class Cow extends Pane {
             getChildren().add(circle2);
         }
 
-
         // Initialiser l'animation de rotation
         rotateTransition = new RotateTransition(Duration.seconds(0.5), this);
         rotateTransition.setFromAngle(-10);
@@ -94,12 +114,11 @@ public class Cow extends Pane {
 
     }
 
-    public void update(){
+    public void update() {
         if (isCollectable == true) {
             move(simulation.getmyScene());
         } else {
-            isMoving = false;
-            translateTransition.stop();
+            stopMove();
         }
 
         if (isMoving) {
@@ -122,7 +141,7 @@ public class Cow extends Pane {
             double destinationX = this.getTranslateX() + direction.directionX;
             double destinationY = this.getTranslateY() + direction.directionY;
 
-            if(Utils.debug){
+            if (Utils.debug) {
                 System.out.println("destinationX:" + destinationX);
                 System.out.println("destinationY:" + destinationY);
             }
@@ -140,7 +159,6 @@ public class Cow extends Pane {
             move(direction);
         }
     }
-
 
     public void move(Vecteur direction) {
         // Calcul de la durée de la translation en fonction de la distance et de la
@@ -161,6 +179,14 @@ public class Cow extends Pane {
 
         translateTransition.play();
         update(); // Démarrer la rotation lorsque le déplacement commence
+    }
+
+    public void stopMove() {
+        if (translateTransition != null) {
+            translateTransition.stop(); // Arrêter l'animation de translation
+            isMoving = false; // Mettre à jour l'état du personnage
+        }
+
     }
 
 }

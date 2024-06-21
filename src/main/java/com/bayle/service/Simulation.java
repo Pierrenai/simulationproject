@@ -11,7 +11,6 @@ import com.bayle.model.Cow;
 import com.bayle.model.Terrain;
 import com.bayle.affichage.ObjectRender;
 import com.bayle.affichage.SimulationScene;
-import com.bayle.archives.SimulationController;
 import com.bayle.util.Utils;
 import com.bayle.util.Vecteur;
 

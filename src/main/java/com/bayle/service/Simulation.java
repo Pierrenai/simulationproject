@@ -16,6 +16,7 @@ import com.bayle.util.Vecteur;
 
 import javafx.animation.AnimationTimer;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 
 public class Simulation {
@@ -23,21 +24,24 @@ public class Simulation {
     private final int simulationPadding = 100;
     private final int amountOfCarotte = 15;
     private final int amountOfCow = 7;
+    private final int SIMULATIONTIME = 60;
 
     private Terrain terrain;
+    private Label timerLabel;
 
     public Terrain getTerrain() {
         return terrain;
     }
 
-    private boolean isRunning = false;
+    private boolean isDayTime = false;
+    // private boolean isRunning = false;
 
-    public boolean isRunning() {
-        return isRunning;
-    }
+    // public boolean isRunning() {
+    // return isRunning;
+    // }
 
     private int secondsElapsed;
-    private int simulationTime = 60; // in seconds
+    private int simulationTime = SIMULATIONTIME; // in seconds
 
     public int getRemainingTime() {
         return simulationTime - secondsElapsed;
@@ -47,7 +51,8 @@ public class Simulation {
         terrain = scene.getTerrain();
         terrain.setSimulatiotn(this);
 
-        isRunning = false;
+        timerLabel = scene.getTimerLabel();
+
         secondsElapsed = 0;
     }
 
@@ -60,13 +65,14 @@ public class Simulation {
             secondsElapsed = 0;
         }
 
-        isRunning = true;
+        isDayTime = true;
 
         new AnimationTimer() {
             private long lastUpdate = 0;
 
             @Override
             public void handle(long now) {
+                // init
                 if (lastUpdate == 0) {
                     lastUpdate = now;
                     return;
@@ -88,8 +94,8 @@ public class Simulation {
     }
 
     public void update() {
-        if (isRunning) {
-            terrain.update();
+        if (isDayTime == true) {
+            updateTimer();
 
             for (Character character : terrain.getCharacters()) {
                 character.update();
@@ -103,12 +109,70 @@ public class Simulation {
             terrain.addCarotte(amountOfCarotte - terrain.getCarottes().size());
             terrain.addCow(amountOfCow - terrain.getCows().size());
 
+            checkEndCondition();
+
             // ObjectRender.Render(myScene);
+        } else {
+            setTimer(60);
         }
     }
 
     public Pane getmyScene() {
         return terrain;
+    }
+
+    private void updateTimer() {
+        // Mettre à jour le Label avec le temps écoulé
+
+        int time = getRemainingTime();
+
+        int hours = time / 3600;
+        int minutes = (time % 3600) / 60;
+        int seconds = time % 60;
+
+        timerLabel.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds));
+    }
+
+    private void setTimer(int secondsRemaining) {
+        // Mettre à jour le Label avec le temps écoulé
+
+        int time = secondsRemaining;
+
+        int hours = time / 3600;
+        int minutes = (time % 3600) / 60;
+        int seconds = time % 60;
+
+        timerLabel.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds));
+    }
+
+    private void checkEndCondition() {
+        if (secondsElapsed >= simulationTime) {
+            isDayTime = false;
+            for (Cow cow : terrain.getCows()) {
+                terrain.removeObject(cow);
+            }
+            for (Carotte carotte : terrain.getCarottes()) {
+                terrain.removeObject(carotte);
+            }
+            for (Character character : terrain.getCharacters()) {
+                character.stopMove();
+                character.returnToHouse(() -> {
+                    if (terrain.isAllAtHouse() == true) {
+                        startDay();
+                    }
+                });
+            }
+        }
+    }
+
+    private void startDay() {
+        for (Character character : terrain.getCharacters()) {
+            character.startDay();
+        }
+        simulationTime = SIMULATIONTIME;
+        secondsElapsed = 0;
+        System.out.println("Number of character " + terrain.getCharacters().size());
+        isDayTime = true;
     }
 
 }

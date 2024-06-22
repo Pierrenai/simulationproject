@@ -65,10 +65,6 @@ public class Terrain extends Pane {
         addHouse();
     }
 
-    public void update() {
-
-    }
-
     /* Objectif : centralisé l'ajout d'objets */
     public void addObject(ObjectType objectType) {
         switch (objectType) {
@@ -96,6 +92,28 @@ public class Terrain extends Pane {
         getChildren().add(character);
     }
 
+    public void addCharacter(Character toCopy) {
+        Character character = new Character(simulation, "/com/bayle/images/character.png", 50);
+        character.setHouse(getHouse(character));
+
+        character.setTranslateX(100);
+        character.setTranslateY(100);
+        objects.add(character);
+        getChildren().add(character);
+    }
+
+    public void addCharacter(int nb) {
+        for (int i = 0; i < nb; i++) {
+            addCharacter();
+        }
+    }
+
+    public void addCharacter(int nb, Character character) {
+        for (int i = 0; i < nb; i++) {
+            addCharacter(character);
+        }
+    }
+
     public void addHouse() {
         House house = new House();
         boolean isOverlapping;
@@ -106,8 +124,8 @@ public class Terrain extends Pane {
             double x = Utils.getRandom(PADDING, (int) getWidth() - PADDING);
             double y = Utils.getRandom(PADDING, (int) getHeight() - PADDING);
 
-            house.setTranslateX(x);
-            house.setTranslateY(y);
+            house.setTranslateX(150);
+            house.setTranslateY(150);
 
             // Vérifier le chevauchement avec les autres carottes
             for (House existingHouse : getHouses()) {
@@ -182,17 +200,11 @@ public class Terrain extends Pane {
 
     }
 
-    public void addCharacter(int nb) {
-        for (int i = 0; i < nb; i++) {
-            addCharacter();
-        }
-    }
-
     public void addCow() {
         Cow cow = new Cow(simulation, 30);
 
         cow.setTranslateX(getWidth() / 2);
-        cow.setTranslateY(-30);
+        cow.setTranslateY(getHeight() / 2);
 
         objects.add(cow);
         getChildren().add(cow);
@@ -248,6 +260,15 @@ public class Terrain extends Pane {
     public void removeObject(Pane object) {
         objects.remove(object);
         getChildren().remove(object);
+    }
+
+    public boolean isAllAtHouse(){
+        for (Character character : getCharacters()) {
+            if(character.isInHouse() == false){
+                return false;
+            }
+        }
+        return true;
     }
 
 }

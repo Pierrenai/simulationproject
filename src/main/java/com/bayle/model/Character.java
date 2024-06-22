@@ -13,7 +13,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 
-public class Character extends Pane {
+public class Character extends Pane implements Cloneable {
 
     private static final double WIDTH = 30; // Largeur du personnage
     private static final double HEIGHT = 50; // Hauteur du personnage
@@ -38,6 +38,22 @@ public class Character extends Pane {
     private int padding;
     private int score;
     private double speedPerSecond;
+
+    private boolean isMovingToHouse = false;
+
+    public void setMovingToHouse(boolean value) {
+        isMovingToHouse = value;
+    }
+
+    private boolean isInHouse = false;
+
+    public boolean isInHouse() {
+        return isInHouse;
+    }
+
+    public void setInHouse(boolean value) {
+        isInHouse = value;
+    }
 
     private boolean isMoving = false;
 
@@ -101,7 +117,7 @@ public class Character extends Pane {
 
     // Définition de la loop
     public void update() {
-        if (isCollecting == false) {
+        if (isCollecting == false && isMovingToHouse == false) {
             // Récupérer la carotte la plus proche
             Carotte carotteMin = null;
             double minDistance = Double.MAX_VALUE;
@@ -142,7 +158,7 @@ public class Character extends Pane {
                 someone.collectCow(cowMin, false);
             } else if (minDistance < proximityThreshold && carotteMin != null && carotteMin.collect()) {
                 this.stopMove();
-                System.out.println("Collecting carotte...");
+                //System.out.println("Collecting carotte...");
                 collectCarotte(carotteMin);
             } else if (isMoving == false) {
                 moveAround();
@@ -182,13 +198,9 @@ public class Character extends Pane {
             isReadyToCollectedCow = true;
             if (cow.allIsReady()) {
                 cowInCollecting.getCollected();
-                System.out.println("Cow collected!");
+                //System.out.println("Cow collected!");
             }
         });
-    }
-
-    private boolean bothCharactersReady(Character otherCharacter) {
-        return this.isReadyToCollectedCow && otherCharacter.isReadyToCollectedCow;
     }
 
     private void moveTo(Pane destinationPane, Vecteur padding, MoveCompletionCallback moveCompletionCallback) {
@@ -244,7 +256,7 @@ public class Character extends Pane {
         scoreText.setText("" + score);
     }
 
-    public void moveTo(Vecteur direction) {
+    public void moveTo(Vecteur direction, MoveCompletionCallback moveCompletionCallback) {
         if (translateTransition != null && translateTransition.getStatus() == Animation.Status.RUNNING) {
             translateTransition.stop();
         }
@@ -258,6 +270,9 @@ public class Character extends Pane {
 
         translateTransition.setOnFinished(event -> {
             this.isMoving = false;
+            if (moveCompletionCallback != null) {
+                moveCompletionCallback.onMoveComplete();
+            }
         });
 
         translateTransition.play();
@@ -285,7 +300,7 @@ public class Character extends Pane {
             simulation.getTerrain().removeObject(carotte);
             isCollecting = false;
             incrementScore(1);
-            System.out.println("Carotte collected!");
+            //System.out.println("Carotte collected!");
         });
 
         translateTransition.play();
@@ -314,7 +329,7 @@ public class Character extends Pane {
         if (destinationY > scene.getHeight() - padding)
             direction.directionY = scene.getHeight() - this.getTranslateY() - padding;
 
-        moveTo(direction);
+        moveTo(direction, null);
 
     }
 
@@ -322,6 +337,10 @@ public class Character extends Pane {
         if (translateTransition != null) {
             translateTransition.stop(); // Arrêter l'animation de translation
             isMoving = false; // Mettre à jour l'état du personnage
+
+            // Arrêter l'animation de rotation
+            rotateTransition.stop();
+            this.setRotate(0); // Réinitialiser l'angle de rotation
         }
 
     }
@@ -330,5 +349,35 @@ public class Character extends Pane {
         isCollecting = false;
         cowInCollecting = null;
         isReadyToCollectedCow = false;
+    }
+
+    public void returnToHouse(MoveCompletionCallback moveCompletionCallback) {
+        isMovingToHouse = true;
+        moveTo(calculateDirectionTo(house), () -> {
+            isInHouse = true;
+            if (moveCompletionCallback != null) {
+                moveCompletionCallback.onMoveComplete();
+            }
+        });
+    }
+
+    public void startDay() {
+        if(score < 5){
+            terrain.removeObject(this);    
+        } else if (score >= 10){
+            int nbOfCopy = (score % 5) - 1;
+            terrain.addCharacter(nbOfCopy, this);
+        }
+        resetPoints();
+        isCollecting = false;
+        cowInCollecting = null;
+        isReadyToCollectedCow = false;
+        isInHouse = false;
+        isMovingToHouse = false;
+    }
+
+    private void resetPoints() {
+        score = 0;
+        scoreText.setText("" + score);
     }
 }

@@ -5,5 +5,10 @@ module com.bayle {
     requires javafx.base;
 
     opens com.bayle to javafx.fxml;
+
     exports com.bayle;
+    exports com.bayle.affichage;
+    exports com.bayle.service;
+    exports com.bayle.model;
+    exports com.bayle.util;
 }

@@ -86,8 +86,8 @@ public class Terrain extends Pane {
         Character character = new Character(simulation, "/com/bayle/images/character.png", 50);
         character.setHouse(getHouse(character));
 
-        character.setTranslateX(100);
-        character.setTranslateY(100);
+        character.setTranslateX(character.houseX);
+        character.setTranslateY(character.houseY);
         objects.add(character);
         getChildren().add(character);
     }
@@ -96,8 +96,8 @@ public class Terrain extends Pane {
         Character character = new Character(simulation, "/com/bayle/images/character.png", 50);
         character.setHouse(getHouse(character));
 
-        character.setTranslateX(100);
-        character.setTranslateY(100);
+        character.setTranslateX(character.houseX);
+        character.setTranslateY(character.houseY);
         objects.add(character);
         getChildren().add(character);
     }
@@ -152,7 +152,10 @@ public class Terrain extends Pane {
             }
         }
         House new_house = new House();
+        new_house.setTranslateX(150 + 10 * getHouses().size());
+        new_house.setTranslateY(150 + 10 * getHouses().size());
         objects.add(new_house);
+        getChildren().add(new_house);
         return new_house;
     }
 
@@ -262,9 +265,9 @@ public class Terrain extends Pane {
         getChildren().remove(object);
     }
 
-    public boolean isAllAtHouse(){
+    public boolean isAllAtHouse() {
         for (Character character : getCharacters()) {
-            if(character.isInHouse() == false){
+            if (character.isInHouse() == false) {
                 return false;
             }
         }

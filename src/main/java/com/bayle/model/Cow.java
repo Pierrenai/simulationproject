@@ -68,7 +68,7 @@ public class Cow extends Pane {
         this.simulation = simulation;
         padding = simulation.getTerrain().getSimPadding();
 
-        this.characterThanCollect = new ArrayList();
+        this.characterThanCollect = new ArrayList<>();
 
         this.speedPerSecond = speedPerSecond;
 

@@ -59,7 +59,7 @@ public class Simulation {
     public void start() {
         if (terrain.getCharacters().isEmpty()) {
             terrain.addCarotte(amountOfCarotte);
-            terrain.addCharacter(2);
+            terrain.addCharacter(15);
             terrain.addCow();
 
             secondsElapsed = 0;

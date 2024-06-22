@@ -15,7 +15,7 @@ public class House extends Pane {
     private ImageView imageView;
 
     private List<Character> characters;
-    private int space = 5;
+    private int space = 10;
 
     public House() {
         // Initialiser l'image

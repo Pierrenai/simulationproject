@@ -30,9 +30,13 @@ public class Character extends Pane implements Cloneable {
 
     // Variable
     private House house;
+    public double houseX;
+    public double houseY;
 
     public void setHouse(House house) {
         this.house = house;
+        houseX = house.getTranslateX();
+        houseY = house.getTranslateY();
     }
 
     private int padding;
@@ -365,7 +369,7 @@ public class Character extends Pane implements Cloneable {
         if(score < 5){
             terrain.removeObject(this);    
         } else if (score >= 10){
-            int nbOfCopy = (score % 5) - 1;
+            int nbOfCopy = (score / 5) - 1;
             terrain.addCharacter(nbOfCopy, this);
         }
         resetPoints();

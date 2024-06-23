@@ -7,6 +7,9 @@
 **Description:**
 This project is a simulation where characters (humans) and cows move around a terrain. The simulation is controlled by a timer that updates every second, simulating the passage of time. Characters hunt cows and collect carrots to multiply.
 
+**How to run:**
+mvn clean javafx:run
+
 **Features:**
 - A cycle with start and end conditions
 - Characters and cows moving around a terrain
